@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EzSTT Active Session</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1392ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        .waveform-container {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .wave-bar {
+            width: 4px;
+            background: #1392ec;
+            border-radius: 2px;
+            transition: height 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white selection:bg-primary/30">
+<div class="relative flex h-screen w-full overflow-hidden">
+<aside class="flex h-full w-20 flex-col items-center border-r border-white/10 bg-background-light dark:bg-background-dark py-6 transition-all duration-300">
+<div class="mb-10 flex flex-col items-center justify-center gap-2">
+<div class="size-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white">graphic_eq</span>
+</div>
+<span class="text-[10px] font-bold tracking-tighter text-primary">EzSTT</span>
+</div>
+<nav class="flex flex-1 flex-col gap-6 items-center">
+<button class="p-3 text-white/50 hover:text-white transition-colors">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="p-3 bg-primary/20 text-primary rounded-xl">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">mic</span>
+</button>
+<button class="p-3 text-white/50 hover:text-white transition-colors">
+<span class="material-symbols-outlined">folder</span>
+</button>
+<button class="p-3 text-white/50 hover:text-white transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</nav>
+<div class="mt-auto flex flex-col gap-6 items-center">
+<button class="p-3 text-white/50 hover:text-white transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="size-10 rounded-full bg-cover bg-center ring-2 ring-primary/20" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBxyuGZLrGqYYKW7eyRltCCpEyJasc6josHWF091f29nb2HLNKsGhSBlX4bVbF7p_NasJirSuVCMmo4mgrLzZMagOqnfG-fvbnAvTHtjakEwu7MCPEnRcprV8LzQqWz0hm23XjASpfPKONPcrjvTmeMHwmq4dVqzmCcByNpbNKq28vNhKoMvu5pgkOtptr95jQUxeCzKb6A27VKkBZfnMOiZQi7LjQ74Nreh-diAGlKrzu1H8F7CE8n9XbWpC_UmzjZMzs6_Qy6eWw")'></div>
+</div>
+</aside>
+<main class="flex flex-1 flex-col">
+<header class="flex h-16 items-center justify-between px-8 border-b border-white/10">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full">
+<div class="size-2 bg-red-500 rounded-full animate-pulse"></div>
+<span class="text-xs font-bold text-red-500 tracking-wider">03:45 REC</span>
+</div>
+<span class="text-sm font-medium text-white/40">Active Session: Marketing Q3 Strategy</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-all">
+<span class="material-symbols-outlined text-[18px]">share</span>
+                    Share
+                </button>
+<button class="flex items-center justify-center p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 flex-col items-center justify-center px-10 pb-20">
+<div class="relative w-full max-w-2xl flex flex-col items-center mb-16">
+<div class="absolute inset-0 bg-primary/20 blur-[120px] rounded-full opacity-30"></div>
+<div class="waveform-container relative z-10">
+<div class="wave-bar" style="height: 40px; background: #1392ec;"></div>
+<div class="wave-bar" style="height: 60px; background: #1392ec;"></div>
+<div class="wave-bar" style="height: 90px; background: #60a5fa;"></div>
+<div class="wave-bar" style="height: 45px; background: #3b82f6;"></div>
+<div class="wave-bar" style="height: 110px; background: #1392ec;"></div>
+<div class="wave-bar" style="height: 75px; background: #60a5fa;"></div>
+<div class="wave-bar" style="height: 35px; background: #1392ec;"></div>
+<div class="wave-bar" style="height: 95px; background: #3b82f6;"></div>
+<div class="wave-bar" style="height: 120px; background: #1392ec;"></div>
+<div class="wave-bar" style="height: 80px; background: #60a5fa;"></div>
+<div class="wave-bar" style="height: 50px; background: #3b82f6;"></div>
+<div class="wave-bar" style="height: 105px; background: #1392ec;"></div>
+<div class="wave-bar" style="height: 65px; background: #60a5fa;"></div>
+<div class="wave-bar" style="height: 40px; background: #3b82f6;"></div>
+<div class="wave-bar" style="height: 85px; background: #1392ec;"></div>
+<div class="wave-bar" style="height: 115px; background: #60a5fa;"></div>
+<div class="wave-bar" style="height: 70px; background: #3b82f6;"></div>
+<div class="wave-bar" style="height: 45px; background: #1392ec;"></div>
+<div class="wave-bar" style="height: 90px; background: #60a5fa;"></div>
+<div class="wave-bar" style="height: 30px; background: #1392ec;"></div>
+</div>
+<p class="mt-6 text-primary/80 font-medium text-sm tracking-widest uppercase">Voice Detected</p>
+</div>
+<div class="w-full max-w-3xl text-center">
+<div class="space-y-4">
+<p class="text-white/40 text-2xl font-light leading-relaxed">
+                        We've been looking at the conversion data from last week and it seems like the new onboarding flow is...
+                    </p>
+<p class="text-white text-3xl font-medium leading-relaxed bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/20">
+                        The quick brown fox jumps over the lazy dog and proceeds to explain the new architectural vision for the project.
+                    </p>
+<div class="inline-flex items-center gap-1">
+<div class="size-1.5 bg-primary rounded-full animate-bounce"></div>
+<div class="size-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
+<div class="size-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background-light/10 dark:bg-white/5 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl">
+<button class="group flex items-center gap-3 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">pause_circle</span>
+<span class="font-bold text-sm tracking-wide">PAUSE</span>
+</button>
+<div class="h-8 w-[1px] bg-white/10"></div>
+<button class="group flex items-center gap-3 px-8 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all shadow-lg shadow-red-500/20">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1">stop_circle</span>
+<span class="font-bold text-sm tracking-wide">STOP RECORDING</span>
+</button>
+<div class="h-8 w-[1px] bg-white/10"></div>
+<button class="p-3 text-white/50 hover:text-white transition-colors">
+<span class="material-symbols-outlined">mic_external_on</span>
+</button>
+</div>
+<div class="absolute bottom-4 right-8 flex items-end gap-1 opacity-20 h-10">
+<div class="w-1 bg-primary h-2"></div>
+<div class="w-1 bg-primary h-4"></div>
+<div class="w-1 bg-primary h-6"></div>
+<div class="w-1 bg-primary h-3"></div>
+<div class="w-1 bg-primary h-8"></div>
+<div class="w-1 bg-primary h-5"></div>
+</div>
+</main>
+</div>
+
+</body></html>
