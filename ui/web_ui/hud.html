@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Speech-to-Text HUD Mode</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1392ec",
+                        "background-dark": "#0a0f14",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        :root {
+            --glass-bg: rgba(16, 26, 34, 0.7);
+            --glow-color: rgba(19, 146, 236, 0.4);
+        }
+        .hud-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+        .waveform-mini {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 16px;
+        }
+        .wave-bar-mini {
+            width: 2px;
+            background: #1392ec;
+            border-radius: 1px;
+        }
+    </style>
+</head>
+<body class="bg-transparent font-display text-white overflow-hidden h-screen w-screen flex items-center justify-center">
+<div class="hud-glass relative flex items-center px-4 py-2 rounded-full border-primary/30 min-w-[380px] h-12 select-none group">
+<div class="flex items-center gap-3 pr-4 border-r border-white/10">
+<div class="waveform-mini">
+<div class="wave-bar-mini h-2"></div>
+<div class="wave-bar-mini h-3"></div>
+<div class="wave-bar-mini h-4"></div>
+<div class="wave-bar-mini h-2"></div>
+<div class="wave-bar-mini h-3"></div>
+<div class="wave-bar-mini h-1"></div>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="size-1.5 bg-red-500 rounded-full animate-pulse"></div>
+<span class="text-[11px] font-bold tracking-tighter text-white/90">03:45</span>
+</div>
+</div>
+<div class="flex-1 px-4 overflow-hidden whitespace-nowrap">
+<p class="text-sm font-medium text-white/80 overflow-hidden text-ellipsis italic">
+                "...explaining the new architectural vision for the project."
+            </p>
+</div>
+<div class="flex items-center gap-1 pl-4 border-l border-white/10">
+<button class="flex items-center justify-center size-7 hover:bg-white/10 rounded-full transition-colors group/btn">
+<span class="material-symbols-outlined text-[18px] text-white/60 group-hover/btn:text-white">pause</span>
+</button>
+<button class="flex items-center justify-center size-7 hover:bg-red-500/20 rounded-full transition-colors group/btn">
+<span class="material-symbols-outlined text-[18px] text-red-400 group-hover/btn:text-red-500" style="font-variation-settings: 'FILL' 1">stop</span>
+</button>
+</div>
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="w-8 h-1 bg-white/20 rounded-full"></div>
+</div>
+</div>
+<div class="fixed inset-0 -z-10 bg-slate-900 opacity-20 pointer-events-none">
+<div class="absolute top-10 left-10 w-64 h-48 bg-white/5 rounded-lg border border-white/10"></div>
+<div class="absolute top-10 right-10 w-32 h-32 bg-white/5 rounded-full border border-white/10"></div>
+</div>
+
+</body></html>

@@ -11,7 +11,8 @@ from core.engine import STTEngine
 from core.personalization import PersonalizationManager
 from core.validator import SetupValidator
 from core.dependency_manager import DependencyManager
-from ui.main_window import MainWindow
+# from ui.main_window import MainWindow  <-- REPLACED
+from ui.web_window import WebWindow
 
 # Initialize Colorama for Terminal Logging
 colorama.init(autoreset=True)
@@ -43,13 +44,14 @@ def main():
     import threading
     threading.Thread(target=engine.preload_model, daemon=True).start()
     
-    # 4. Launch Main Window
-    app = MainWindow(config, engine)
+    # 4. Launch Main Window (Web UI)
+    app = WebWindow(config, engine)
     
     # 6. Register Global Hotkey
     shortcut = config.get("shortcut", "ctrl+alt+r")
     try:
-        keyboard.add_hotkey(shortcut, lambda: app.after(0, app.toggle_mic))
+        # Use bridge to toggle recording. No need for app.after() here as bridge handles threading.
+        keyboard.add_hotkey(shortcut, lambda: app.bridge.toggle_recording())
         print(f"{Fore.GREEN}✓ Global hotkey registered: {shortcut.upper()}")
     except Exception as e:
         print(f"{Fore.RED}✗ Could not bind hotkey '{shortcut}': {e}")
@@ -61,7 +63,7 @@ def main():
     print(f"{Fore.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Fore.RESET}")
     
     try:
-        app.mainloop()
+        app.run()
     except KeyboardInterrupt:
         print(f"\n{Fore.YELLOW}Shutting down...")
     finally:
