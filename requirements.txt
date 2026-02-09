@@ -1,0 +1,10 @@
+faster-whisper
+sounddevice
+numpy
+scipy
+google-generativeai
+openai
+keyboard
+pyperclip
+colorama
+torch

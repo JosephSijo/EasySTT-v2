@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Binary/Large Files
+ffmpeg.exe
+ffprobe.exe
+
+# Application Data (Ignore local configs/keys)
+config.json
+*.db
+*.json
+!version_info.json
+!manifest.json
+!plugin.json
+
+# User Content
+recordings/
+transcriptions/
+*.wav
+*.txt
+!requirements.txt
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
