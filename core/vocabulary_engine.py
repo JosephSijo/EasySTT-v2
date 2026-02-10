@@ -52,6 +52,17 @@ class VocabularyEngine:
                 )
             ''')
             
+            # Migration: Ensure vocabulary_path exists (for older databases)
+            try:
+                cursor.execute("ALTER TABLE domain_plugins ADD COLUMN vocabulary_path TEXT")
+            except sqlite3.OperationalError:
+                pass # Already exists
+            
+            try:
+                cursor.execute("ALTER TABLE domain_plugins ADD COLUMN plugin_path TEXT")
+            except sqlite3.OperationalError:
+                pass # Already exists
+            
             # Correction History (for phonetic learning)
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS correction_history (

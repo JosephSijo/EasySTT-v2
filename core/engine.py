@@ -163,10 +163,14 @@ class STTEngine:
         if self.processing_thread: self.processing_thread.join()
 
     def _record_loop(self):
-        """Captures raw audio in chunks."""
+        """Captures raw audio in chunks and calculates amplitude for UI."""
         def sd_callback(indata, frames, time_info, status):
             if self.is_recording:
                 self.audio_queue.put(indata.copy())
+                # Calculate Peak Amplitude/RMS for UI Level Meter
+                amplitude = float(np.max(np.abs(indata)))
+                if self.callback_fn:
+                    self.callback_fn({"type": "level", "value": amplitude})
 
         with sd.InputStream(samplerate=self.fs, channels=1, callback=sd_callback):
             while self.is_recording:
@@ -257,6 +261,7 @@ class STTEngine:
     def _finalize_transcription(self, audio_data: np.ndarray):
         """Transcribe -> Refine -> Emit Final Result."""
         self.is_processing = True
+        self._emit({"type": "state", "state": "processing"})
         print(f"{Fore.CYAN}[Engine] Transcribing...")
         
         # 1. Core Transcription with Bias
@@ -340,10 +345,9 @@ class STTEngine:
             mode=mode,
             confidence=result.get("confidence", 1.0),
             duration=len(audio_data) / self.fs,
-            agents=self.mcp.context_cache.keys()
+            agents=list(self.mcp.context_cache.keys())
         )
         
-        self.tracker.track_usage(file_path, result["text"])
         self.is_processing = False
         
         # 5. Publish to A2A / Agent Ecosystem

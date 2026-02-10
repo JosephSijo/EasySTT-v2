@@ -8,7 +8,7 @@ keyboard
 pyperclip
 colorama
 torch
-pywebview
-google-genai
-uvicorn
+PySide6
 fastapi
+uvicorn
+pywebview

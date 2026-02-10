@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🐒 EasySTT 2.0.0  
+# 🎙️ EasySTT v2.0 - The Sound of Productivity
 ### *The "I'm Too Lazy to Type" Edition*
 
 <img src="https://github.com/JosephSijo/EasySTT-v2/blob/8607d24a8b932b0c2d89847b608b9422a1d897f6/LML%20Full%20(Light).png" width="280" alt="Lazy Monkey Lab Logo"/>
@@ -15,9 +15,35 @@
 EasySTT was born from a highly productive state of *pure laziness*.  
 Why smash a keyboard with ten fingers when you can use your voice?
 
-I’ve spent thousands of hours (mostly questioning my life decisions)  
-to make sure you never have to touch your keyboard again—  
-except for the occasional typo we politely blame as **“AI hallucination.”**
+EasySTT is a professional, privacy-first desktop application designed for high-fidelity speech-to-text. Built on a **Modern PySide6 Architecture**, it combines industrial-grade transcription with a premium "Obsidian" aesthetic.
+
+---
+
+## ✨ Key Features
+
+- **🚀 Industrial Transcriptions**: Powered by `faster-whisper` for near-instant, high-accuracy results.
+- **🛡️ Privacy-First Logic**: Choose between Local, Hybrid, or Enterprise privacy modes.
+- **🧩 Plugin Ecosystem**: Extend functionality with specialized domain vocabularies (Medical, Legal, Dev).
+- **🤖 A2A Agent Bridge**: Exposes a local API for other agents to consume live transcription events.
+- **✨ Text Sterilization**: Automatically removes fillers ("um", "uh"), filters hallucinations, and applies smart formatting.
+- **🧠 MCP Integration**: Context-aware recognition that listens to your workspace hints.
+
+---
+
+## 🛠️ Tech Stack
+- **Engine**: `faster-whisper`
+- **Frontend**: PySide6 (Qt for Python)
+- **Networking**: A2A Bridge & MCP Support
+- **Database**: SQLite (Vocabulary & Privacy Audit)
+- **Visuals**: Antigravity Win32 Framework (Mica/Acrylic effects)
+
+---
+
+## 🚀 Quick Start
+1. Clone the repo.
+2. Run `pip install -r requirements.txt`.
+3. Launch `python main.py`.
+4. Press `Ctrl+Alt+R` and start talking.
 
 ---
 
@@ -31,36 +57,17 @@ except for the occasional typo we politely blame as **“AI hallucination.”**
 
 ---
 
-## 🐒 Join the Lab
-The Chief Monkey can be found swinging around here while slipping between ideas and banana peels:  
-**`sijorockrider`**  
+## 🐒 The Lab
+Created with ❤️ by **Sijo Joseph** at **Lazy Monkey Lab**.
 
----
-
-## 🐛 Issues & Feedback
-If EasySTT misunderstands something you said…  
-**just pretend it nothing happened.**. *Problem solved*.
-
-For real bugs, feature requests, or rants disguised as feedback,  
-open an issue in the repository.  
-
----
-
-## ❤️ Contributing
-Contributions are warmly welcomed—  
-especially from those who are *just as lazy*,  
-yet mysteriously more productive than me.
-
-Fork it. Improve it.  
-Send a PR. Earn virtual bananas. 🍌
+- **Identity**: [sijorockrider](https://github.com/JosephSijo)
 
 ---
 
 ## 📜 License
-**Buy me with Dolllars**
+**Professional Edition**
 
-(I accept bananas or a portion of your home too as donations)
-This software is free to use and modify
+This software is free to use and modify for personal productivity.
 
 ---
 
@@ -76,8 +83,4 @@ _Use responsibly. Or irresponsibly. That’s none of my business_
 
 ---
 
-<div align="center">
-
-</div>
-
----
+© 2026 Lazy Monkey Lab. No keyboards were harmed in the making of this software.

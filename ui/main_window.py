@@ -3,9 +3,11 @@ import tkinter as tk
 import queue
 from tkinter import ttk, messagebox
 import threading
+import os
 from .settings_window import SettingsWindow
 from .hud_window import HUD
 from .marketplace_modal import MarketplaceModal
+from core.win32_utils import apply_window_masking, enable_acrylic_effect, set_window_shadow
 
 
 class MainWindow(tk.Tk):
@@ -25,10 +27,10 @@ class MainWindow(tk.Tk):
         self._timer_job = None
         self.last_raw_text = ""
         
-        # 1. System Config (Frameless)
+        # 1. System Config (Premium Dimensions)
         self.overrideredirect(True) # Remove borders
-        self.geometry("480x520")
-        self.configure(bg="#0a0a0a") # Deep Obsidian
+        self.geometry("940x650")
+        self.configure(bg="#101a22") # Deep Space
         
         # 2. Window Dragging State
         self._drag_data = {"x": 0, "y": 0}
@@ -41,237 +43,287 @@ class MainWindow(tk.Tk):
         # 3. UI Construction
         self._build_ui()
         
-        # 4. Start Queue Monitor
+        # 4. Advanced Windows Customization (Antigravity Framework)
+        self.after(100, self._apply_antigravity_features)
+        
+        # 5. Start Queue Monitor
         self.after(100, self._process_queue)
         
-        # 5. Connection status callback
+        # 6. Connection status callback
         self.engine.callback_fn = self._engine_callback
-        
         
         print("[MainWindow] Control Center Initialized.")
 
+    def _apply_antigravity_features(self):
+        """Apply Win32 masking, acrylic, and shadow effects."""
+        hwnd = self.winfo_id()
+        apply_window_masking(hwnd, radius=30)
+        enable_acrylic_effect(hwnd, theme="dark")
+        set_window_shadow(hwnd, enabled=True)
+
     def _build_ui(self):
-        """Build the main interface with a custom title bar."""
+        """Build the main interface with a sidebar-based layout."""
         # 0. Custom Title Bar
-        self.title_bar = tk.Frame(self, bg="#0a0a0a", height=35)
+        self.title_bar = tk.Frame(self, bg="#111518", height=32)
         self.title_bar.pack(fill="x", side="top")
         self.title_bar.bind("<Button-1>", self._start_drag)
         self.title_bar.bind("<B1-Motion>", self._do_drag)
 
-        # App Icon/Title in Title Bar
-        tk.Label(self.title_bar, text=" ✦ EasySTT", font=("Segoe UI", 9, "bold"),
-                 bg="#0a0a0a", fg="#ffffff").pack(side="left", padx=10)
+        # App Icon in Title Bar
+        tk.Label(self.title_bar, text="✦ EasySTT v2.0", font=("Segoe UI Semibold", 9),
+                 bg="#111518", fg="#888888").pack(side="left", padx=15)
 
         # Window Controls
-        tk.Button(self.title_bar, text="✕", font=("Segoe UI", 8),
-                  bg="#0a0a0a", fg="#666666", borderwidth=0, cursor="hand2",
-                  activebackground="#ff5252", activeforeground="white",
-                  command=self.destroy, padx=10).pack(side="right")
+        tk.Button(self.title_bar, text="✕", font=("Segoe UI", 9),
+                  bg="#111518", fg="#666666", borderwidth=0, cursor="hand2",
+                  activebackground="#e81123", activeforeground="white",
+                  command=self.destroy, padx=12).pack(side="right")
         
-        tk.Button(self.title_bar, text="─", font=("Segoe UI", 8),
-                  bg="#0a0a0a", fg="#666666", borderwidth=0, cursor="hand2",
+        tk.Button(self.title_bar, text="─", font=("Segoe UI", 9),
+                  bg="#111518", fg="#666666", borderwidth=0, cursor="hand2",
                   activebackground="#333333", activeforeground="white",
-                  command=self._minimize_window, padx=10).pack(side="right")
+                  command=self._minimize_window, padx=12).pack(side="right")
 
-        # 1. Tabbed Interface (Obsidian Style)
-        style = ttk.Style()
-        style.theme_use('default')
-        style.configure("TNotebook", background="#0a0a0a", borderwidth=0)
-        style.configure("TNotebook.Tab", background="#1a1a1a", foreground="#888888", 
-                        padding=[15, 5], font=("Segoe UI", 8, "bold"), borderwidth=0)
-        style.map("TNotebook.Tab", background=[("selected", "#0a0a0a")], 
-                  foreground=[("selected", "#ffffff")])
+        # Layout Main Containers
+        self.main_container = tk.Frame(self, bg="#101a22")
+        self.main_container.pack(fill="both", expand=True)
 
-        self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True, padx=2, pady=(0, 2))
-        
-        # --- TAB 1: TRANSCRIPTION ---
-        self.transcription_frame = tk.Frame(self.notebook, bg="#0a0a0a")
-        self.notebook.add(self.transcription_frame, text="   TRANSCRIBE   ")
-        
-        # --- TAB 2: PLUGINS & LEARNING ---
-        self.control_frame = tk.Frame(self.notebook, bg="#0a0a0a")
-        self.notebook.add(self.control_frame, text="   ECOSYSTEM   ")
-        
-        # --- TAB 3: PRIVACY & AUDIT ---
-        self.privacy_frame = tk.Frame(self.notebook, bg="#0a0a0a")
-        self.notebook.add(self.privacy_frame, text="   PRIVACY   ")
-        
-        self._build_transcription_tab()
-        self._build_control_tab()
-        self._build_privacy_tab()
-        self._build_footer()
+        # 1. Sidebar (Obsidian)
+        self.sidebar = tk.Frame(self.main_container, bg="#111518", width=220)
+        self.sidebar.pack(side="left", fill="y")
+        self.sidebar.pack_propagate(False)
 
-    def _build_transcription_tab(self):
-        parent = self.transcription_frame
-        # ... (Previous transcription UI logic moved here)
-        main_container = tk.Frame(parent, bg="#1e1e1e")
-        main_container.pack(fill="both", expand=True, padx=10, pady=10)
-        
-        # Header
-        header = tk.Frame(main_container, bg="#1e1e1e")
-        header.pack(fill="x", pady=(0, 10))
-        
-        tk.Label(header, text="EasySTT", font=("Segoe UI", 16, "bold"), 
-                 bg="#1e1e1e", fg="#ffffff").pack(side="left")
-        
-        # Status
-        self.status_label = tk.Label(header, text="Ready", font=("Segoe UI", 9), 
-                                    bg="#0a0a0a", fg="#444444")
-        self.status_label.pack(side="right", pady=5)
-        
-        self.timer_label = tk.Label(header, text="", font=("Segoe UI", 9, "bold"),
-                                   bg="#0a0a0a", fg="#ff5252")
-        self.timer_label.pack(side="right", padx=10)
-        
-        # Interim Result Label (Live Preview)
-        self.interim_label = tk.Label(main_container, text="", font=("Segoe UI", 10, "italic"),
-                                     bg="#1e1e1e", fg="#00bcd4")
-        self.interim_label.pack(fill="x", pady=(0, 5))
+        # Sidebar Header
+        logo_frame = tk.Frame(self.sidebar, bg="#111518", pady=30)
+        logo_frame.pack(fill="x")
+        tk.Label(logo_frame, text="EasySTT", font=("Segoe UI", 18, "bold"),
+                 bg="#111518", fg="#ffffff").pack()
+        tk.Label(logo_frame, text="PROFESSIONAL", font=("Segoe UI", 7, "bold"),
+                 bg="#111518", fg="#1392ec").pack()
 
-        # Result Area
-        result_frame = tk.Frame(main_container, bg="#2d2d2d", bd=1)
-        result_frame.pack(fill="both", expand=True)
+        # Navigation Buttons
+        self.nav_buttons = {}
+        nav_items = [
+            ("🏠 HOME", "home"),
+            ("🧩 ECOSYSTEM", "ecosystem"),
+            ("🛡️ PRIVACY", "privacy"),
+            ("🐒 ABOUT", "about")
+        ]
         
-        # Styled Text Container with Tags for Confidence
+        for text, key in nav_items:
+            btn = tk.Button(
+                self.sidebar, text=f"  {text}", font=("Segoe UI Semibold", 10),
+                bg="#111518", fg="#888888", borderwidth=0, anchor="w",
+                padx=25, pady=12, cursor="hand2", activebackground="#1a1f24",
+                activeforeground="#ffffff", command=lambda k=key: self._switch_tab(k)
+            )
+            btn.pack(fill="x")
+            self.nav_buttons[key] = btn
+
+        # Sidebar Footer
+        self.sidebar_footer = tk.Frame(self.sidebar, bg="#111518", pady=20)
+        self.sidebar_footer.pack(side="bottom", fill="x")
+        
+        tk.Button(
+            self.sidebar_footer, text="⚙️ SETTINGS", font=("Segoe UI", 9, "bold"),
+            bg="#111518", fg="#666666", borderwidth=0, cursor="hand2",
+            padx=25, command=self.open_settings
+        ).pack(side="left")
+
+        # 2. Content Area
+        self.content_area = tk.Frame(self.main_container, bg="#101a22")
+        self.content_area.pack(side="right", fill="both", expand=True)
+
+        # Initialize Frames
+        self.frames = {}
+        self.frames["home"] = tk.Frame(self.content_area, bg="#101a22")
+        self.frames["ecosystem"] = tk.Frame(self.content_area, bg="#101a22")
+        self.frames["privacy"] = tk.Frame(self.content_area, bg="#101a22")
+        self.frames["about"] = tk.Frame(self.content_area, bg="#101a22")
+
+        for frame in self.frames.values():
+            frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        # Build Sub-Views
+        self._build_home_view()
+        self._build_ecosystem_view()
+        self._build_privacy_view()
+        self._build_about_view()
+
+        # Set default view
+        self._switch_tab("home")
+
+    def _switch_tab(self, key):
+        """Switch between sidebar tabs."""
+        # Update buttons
+        for k, btn in self.nav_buttons.items():
+            if k == key:
+                btn.config(bg="#1a1f24", fg="#ffffff")
+            else:
+                btn.config(bg="#111518", fg="#888888")
+        
+        # Lift frame
+        self.frames[key].tkraise()
+
+    def _build_home_view(self):
+        """Build the redesigned Home Dashboard."""
+        parent = self.frames["home"]
+        container = tk.Frame(parent, bg="#101a22", padx=40, pady=40)
+        container.pack(fill="both", expand=True)
+
+        # Hero Section
+        hero_frame = tk.Frame(container, bg="#101a22")
+        hero_frame.pack(pady=(40, 60))
+
+        tk.Label(hero_frame, text="Ready to capture your thoughts?", 
+                 font=("Segoe UI Variable Display", 24, "bold"),
+                 bg="#101a22", fg="#ffffff").pack()
+        
+        tk.Label(hero_frame, text="Press the button below or use Ctrl+Alt+R to start.", 
+                 font=("Segoe UI", 11), bg="#101a22", fg="#666666").pack(pady=5)
+
+        # Large Record Button
+        self.record_circle = tk.Canvas(container, width=120, height=120, 
+                                      bg="#101a22", highlightthickness=0)
+        self.record_circle.pack()
+        
+        self._btn_circle = self.record_circle.create_oval(10, 10, 110, 110, 
+                                                        fill="#1392ec", outline="")
+        self.record_circle.create_text(60, 60, text="🎙️", font=("Segoe UI", 32), fill="white")
+        
+        self.record_circle.bind("<Button-1>", lambda e: self.toggle_mic())
+        self.record_circle.config(cursor="hand2")
+
+        # Stats / Health Row
+        stats_frame = tk.Frame(container, bg="#101a22")
+        stats_frame.pack(side="bottom", fill="x", pady=20)
+
+        for label, val in [("LOCAL ENGINE", "V2.0-ULTRA"), ("UPTIME", "4.2h"), ("ACCURACY", "98.4%")]:
+            card = tk.Frame(stats_frame, bg="#111518", padx=15, pady=10)
+            card.pack(side="left", expand=True, padx=5)
+            tk.Label(card, text=label, font=("Segoe UI", 7, "bold"), 
+                     bg="#111518", fg="#1392ec").pack(anchor="w")
+            tk.Label(card, text=val, font=("Segoe UI Semibold", 10), 
+                     bg="#111518", fg="#ffffff").pack(anchor="w")
+
+        # 4. Transcription Area (Now integrated)
+        result_container = tk.Frame(container, bg="#101a22")
+        result_container.pack(fill="both", expand=True, pady=20)
+        
+        # Status & Timer Header (Subtle)
+        status_header = tk.Frame(result_container, bg="#101a22")
+        status_header.pack(fill="x")
+        
+        self.status_label = tk.Label(status_header, text="READY", font=("Segoe UI", 8, "bold"),
+                                    bg="#101a22", fg="#444444")
+        self.status_label.pack(side="left")
+        
+        self.timer_label = tk.Label(status_header, text="", font=("Segoe UI", 8, "bold"),
+                                   bg="#101a22", fg="#ff5252")
+        self.timer_label.pack(side="right")
+
+        # Result Text Box (The main transcription target)
         self.result_text = tk.Text(
-            result_frame, wrap="word", bg="#2d2d2d", fg="white",
-            font=("Segoe UI", 11), borderwidth=0, padx=10, pady=10,
-            undo=True, height=8
+            result_container, wrap="word", bg="#111518", fg="white",
+            font=("Segoe UI", 11), borderwidth=0, padx=20, pady=20,
+            undo=True, height=8, insertbackground="white"
         )
-        self.result_text.pack(fill="both", expand=True)
+        self.result_text.pack(fill="both", expand=True, pady=10)
         
-        # Confidence Tags
+        # Interim Result (Live Preview)
+        self.interim_label = tk.Label(result_container, text="", font=("Segoe UI", 10, "italic"),
+                                     bg="#101a22", fg="#1392ec")
+        self.interim_label.pack(fill="x")
+
+        # Confidence Tags (Required for engine callbacks)
         self.result_text.tag_configure("high_conf", foreground="#ffffff")
         self.result_text.tag_configure("med_conf", foreground="#e0e0e0")
-        self.result_text.tag_configure("low_conf", foreground="#ffb74d") # Soft orange
-        self.result_text.tag_configure("ghost", foreground="#666666", font=("Segoe UI", 11, "italic"))
+        self.result_text.tag_configure("low_conf", foreground="#ffb74d")
         
-        # Correction Actions
-        self.learn_frame = tk.Frame(result_frame, bg="#2d2d2d")
-        self.learn_frame.pack(fill="x", pady=(5, 5), padx=10)
+        # Interaction Buttons
+        actions_frame = tk.Frame(result_container, bg="#101a22")
+        actions_frame.pack(fill="x", pady=10)
         
-        self.token_label = tk.Label(self.learn_frame, text="", font=("Segoe UI", 8),
-                                   bg="#2d2d2d", fg="#666666")
-        self.token_label.pack(side="left")
-
         self.learn_btn = tk.Button(
-            self.learn_frame, text="✨ TEACH AI", command=self._learn_correction,
-            bg="#4caf50", fg="white", font=("Segoe UI", 8, "bold"), borderwidth=0, padx=8
+            actions_frame, text="✨ TEACH AI", font=("Segoe UI", 8, "bold"),
+            bg="#1a1f24", fg="#888888", borderwidth=0, cursor="hand2",
+            padx=15, pady=8, command=self._learn_correction
         )
         self.learn_btn.pack(side="right")
-        
-        action_frame = tk.Frame(main_container, bg="#1e1e1e")
-        action_frame.pack(side="bottom", pady=15)
-        
-        # Main Button
-        self.mic_btn = tk.Button(
-            action_frame, text="🎙 RECORD", command=self.toggle_mic,
-            bg="#007acc", fg="white", font=("Segoe UI", 12, "bold"),
-            borderwidth=0, cursor="hand2", padx=20, pady=10
-        )
-        self.mic_btn.pack()
-        
-        # Navigation Links
-        nav_frame = tk.Frame(action_frame, bg="#1e1e1e", pady=10)
-        nav_frame.pack()
-        
-        
-        tk.Button(
-            nav_frame, text="🏙 Settings", command=self.open_settings,
-            bg="#0a0a0a", fg="#666666", font=("Segoe UI", 9), borderwidth=0, padx=10, pady=5, cursor="hand2"
-        ).pack(side="left")
+        # Token Stats (subtle)
+        self.token_label = tk.Label(actions_frame, text="", font=("Segoe UI", 8),
+                                   bg="#101a22", fg="#444444")
+        self.token_label.pack(side="left")
 
-        tk.Button(
-            nav_frame, text="📖 Vocabulary", command=self._open_vocabulary,
-            bg="#0a0a0a", fg="#666666", font=("Segoe UI", 9), borderwidth=0, padx=10, pady=5, cursor="hand2"
-        ).pack(side="left")
 
-    def _build_footer(self):
-        """Build the app footer with HUD toggle and status."""
-        footer = tk.Frame(self, bg="#2d2d2d", height=40)
-        footer.pack(side="bottom", fill="x")
-        
-        # HUD Toggle
-        self.floater_btn = tk.Button(
-            footer, text="🔘 HUD", font=("Segoe UI", 8, "bold"),
-            bg="#2d2d2d", fg="#666666", borderwidth=0, cursor="hand2",
-            command=self.toggle_floater
-        )
-        self.floater_btn.pack(side="right", padx=10, pady=5)
-        
-        # Version
-        tk.Label(footer, text="EasySTT v2.0 • Pro Active", font=("Segoe UI", 8),
-                 bg="#2d2d2d", fg="#555555").pack(side="left", padx=10)
-
-    def _build_control_tab(self):
-        """Build the Plugins & Learning management tab."""
-        parent = self.control_frame
-        container = tk.Frame(parent, bg="#1e1e1e", padx=20, pady=20)
+    def _build_ecosystem_view(self):
+        """Build the Plugins & Learning management view."""
+        parent = self.frames["ecosystem"]
+        container = tk.Frame(parent, bg="#101a22", padx=40, pady=40)
         container.pack(fill="both", expand=True)
         
-        # 1. Plugin Section
-        tk.Label(container, text="🧩 Active Plugins", 
-                 font=("Segoe UI", 12, "bold"), bg="#1e1e1e", fg="white").pack(anchor="w")
+        tk.Label(container, text="Ecosystem Control", 
+                 font=("Segoe UI", 18, "bold"), bg="#101a22", fg="#ffffff").pack(anchor="w")
         
-        self.plugin_list_frame = tk.Frame(container, bg="#1e1e1e", pady=10)
+        tk.Label(container, text="Manage your specialized vocabularies and AI plugins.", 
+                 font=("Segoe UI", 10), bg="#101a22", fg="#666666").pack(anchor="w", pady=(5, 20))
+
+        # 1. Plugin Section
+        section_p = tk.Frame(container, bg="#111518", padx=20, pady=20)
+        section_p.pack(fill="x", pady=10)
+        
+        tk.Label(section_p, text="🧩 ACTIVE PLUGINS", 
+                 font=("Segoe UI", 8, "bold"), bg="#111518", fg="#1392ec").pack(anchor="w")
+        
+        self.plugin_list_frame = tk.Frame(section_p, bg="#111518", pady=10)
         self.plugin_list_frame.pack(fill="x")
         
-        # Marketplace Button
-        self.market_btn = tk.Button(
-            container, text=" 🛍️ BROWSE MARKETPLACE ",
-            font=("Segoe UI", 10, "bold"),
-            bg="#2c3e50", fg="white",
-            activebackground="#34495e", activeforeground="white",
-            borderwidth=0, cursor="hand2", padx=10, pady=8,
+        tk.Button(
+            section_p, text="BROWSE MARKETPLACE",
+            font=("Segoe UI", 9, "bold"), bg="#1392ec", fg="white",
+            borderwidth=0, cursor="hand2", padx=15, pady=8,
             command=self._open_marketplace
-        )
-        self.market_btn.pack(pady=20)
+        ).pack(side="right")
         
-        # 2. Learning Stats Section
-        tk.Label(container, text="🧠 AI Learning Stats", 
-                 font=("Segoe UI", 12, "bold"), bg="#1e1e1e", fg="white").pack(anchor="w", pady=(10, 5))
+        # 2. Stats Section
+        section_s = tk.Frame(container, bg="#111518", padx=20, pady=20)
+        section_s.pack(fill="x", pady=10)
         
-        self.stats_label = tk.Label(container, text="Loading stats...", 
-                                   font=("Segoe UI", 10), bg="#1e1e1e", fg="#aaaaaa", justify="left")
-        self.stats_label.pack(anchor="w")
+        tk.Label(section_s, text="🧠 AI LEARNING STATS", 
+                 font=("Segoe UI", 8, "bold"), bg="#111518", fg="#1392ec").pack(anchor="w")
+        
+        self.stats_label = tk.Label(section_s, text="Loading stats...", 
+                                   font=("Segoe UI", 10), bg="#111518", fg="#ffffff", justify="left")
+        self.stats_label.pack(anchor="w", pady=10)
 
-        # 3. Agent A2A Bridge Section
-        a2a_frame = tk.Frame(container, bg="#1a1a1a", pady=10, padx=15)
-        a2a_frame.pack(fill="x", pady=20)
+        # 3. Agent Bridge
+        section_a = tk.Frame(container, bg="#111518", padx=20, pady=20)
+        section_a.pack(fill="x", pady=10)
         
-        tk.Label(a2a_frame, text="🤖 Agent Ecosystem (A2A Bridge)", 
-                 font=("Segoe UI", 9, "bold"), bg="#1a1a1a", fg="#00ccff").pack(anchor="w")
+        tk.Label(section_a, text="🤖 AGENT A2A BRIDGE", 
+                 font=("Segoe UI", 8, "bold"), bg="#111518", fg="#1392ec").pack(anchor="w")
         
         a2a_url = f"http://localhost:{self.engine.a2a.port}"
-        tk.Label(a2a_frame, text=f"Local API: {a2a_url}", 
-                 font=("Consolas", 8), bg="#1a1a1a", fg="#888888").pack(anchor="w")
+        tk.Label(section_a, text=f"Local API: {a2a_url}", 
+                 font=("Consolas", 9), bg="#111518", fg="#888888").pack(anchor="w", pady=5)
         
-        state_text = "🟢 ACTIVE" if self.engine.a2a.enabled else "⚪ DISABLED"
-        tk.Label(a2a_frame, text=state_text, font=("Segoe UI", 8, "bold"), 
-                 bg="#1a1a1a", fg="#4caf50").pack(anchor="w", pady=(5, 0))
-
-        # Refresh
         self._update_ecosystem_view()
 
     def _update_ecosystem_view(self):
         """Update plugin list and learning stats from the engine."""
         try:
-            # Clear existing plugin labels
             for widget in self.plugin_list_frame.winfo_children():
                 widget.destroy()
             
-            # Get plugins
             plugins = self.engine.plugins.discover_plugins()
             if not plugins:
                 tk.Label(self.plugin_list_frame, text="No plugins active.", 
-                         bg="#1e1e1e", fg="#666666").pack(anchor="w")
+                         bg="#111518", fg="#666666").pack(anchor="w")
             else:
                 for p in plugins:
                     tk.Label(self.plugin_list_frame, text=f"✅ {p.name} (v{p.version})", 
-                             bg="#1e1e1e", fg="#4caf50", font=("Segoe UI", 10)).pack(anchor="w")
+                             bg="#111518", fg="#4caf50", font=("Segoe UI", 10)).pack(anchor="w")
             
-            # Stats
             stats = self.engine.vocab.get_stats()
             stats_text = (
                 f"• Total Learned Words: {stats['total_words']}\n"
@@ -279,7 +331,6 @@ class MainWindow(tk.Tk):
                 f"• Knowledge Base: {os.path.basename(stats['db_path'])}"
             )
             self.stats_label.config(text=stats_text)
-            
         except Exception as e:
             print(f"Error updating ecosystem view: {e}")
 
@@ -287,40 +338,40 @@ class MainWindow(tk.Tk):
         """Open the Marketplace discovery modal."""
         MarketplaceModal(self, self.engine)
 
-    def _build_privacy_tab(self):
-        """Build the Privacy & Audit management tab."""
-        parent = self.privacy_frame
-        container = tk.Frame(parent, bg="#1e1e1e", padx=20, pady=20)
+    def _build_privacy_view(self):
+        """Build the Privacy & Audit management view."""
+        parent = self.frames["privacy"]
+        container = tk.Frame(parent, bg="#101a22", padx=40, pady=40)
         container.pack(fill="both", expand=True)
         
-        tk.Label(container, text="🛡️ Transcription Audit Log", 
-                 font=("Segoe UI", 12, "bold"), bg="#1e1e1e", fg="white").pack(anchor="w")
+        tk.Label(container, text="Privacy & Audit", 
+                 font=("Segoe UI", 18, "bold"), bg="#101a22", fg="#ffffff").pack(anchor="w")
         
-        tk.Label(container, text="Review how your voice data was processed.", 
-                 font=("Segoe UI", 9), bg="#1e1e1e", fg="#666666").pack(anchor="w", pady=(0, 10))
+        tk.Label(container, text="Local-first data processing. Review your audit logs below.", 
+                 font=("Segoe UI", 10), bg="#101a22", fg="#666666").pack(anchor="w", pady=(5, 20))
 
-        # Audit List (Scrollable)
-        list_container = tk.Frame(container, bg="#1a1a1a")
+        table_frame = tk.Frame(container, bg="#111518", padx=2, pady=2)
+        table_frame.pack(fill="both", expand=True)
+        
+        list_container = tk.Frame(table_frame, bg="#111518")
         list_container.pack(fill="both", expand=True)
         
-        self.audit_scroll = tk.Scrollbar(list_container)
+        self.audit_scroll = tk.Scrollbar(list_container, width=10)
         self.audit_scroll.pack(side="right", fill="y")
         
         self.audit_list = tk.Listbox(
-            list_container, bg="#1a1a1a", fg="#aaaaaa", borderwidth=0,
-            font=("Consolas", 9), yscrollcommand=self.audit_scroll.set,
-            highlightthickness=0, selectbackground="#333333"
+            list_container, bg="#111518", fg="#aaaaaa", borderwidth=0,
+            font=("Consolas", 10), yscrollcommand=self.audit_scroll.set,
+            highlightthickness=0, selectbackground="#1a1f24"
         )
-        self.audit_list.pack(fill="both", expand=True)
+        self.audit_list.pack(fill="both", expand=True, padx=15, pady=15)
         self.audit_scroll.config(command=self.audit_list.yview)
         
-        # Refresh Button
         tk.Button(
-            container, text=" 🔄 REFRESH LOG ",
-            font=("Segoe UI", 8, "bold"),
-            bg="#2c3e50", fg="white", borderwidth=0, cursor="hand2",
-            command=self._update_privacy_view
-        ).pack(pady=10)
+            container, text="REFRESH LOG", font=("Segoe UI", 8, "bold"),
+            bg="#1a1f24", fg="#888888", borderwidth=0, cursor="hand2",
+            padx=15, pady=8, command=self._update_privacy_view
+        ).pack(pady=20, side="right")
         
         self._update_privacy_view()
 
@@ -329,17 +380,14 @@ class MainWindow(tk.Tk):
         try:
             self.audit_list.delete(0, tk.END)
             logs = self.engine.privacy.get_audit_summary(limit=20)
-            
             for log in logs:
-                ts = log['timestamp'].split()[1] # Just time
+                ts = log['timestamp'].split()[1]
                 mode = log['mode'].upper()
                 conf = f"{int(log['confidence']*100)}%"
                 dur = f"{log['duration_seconds']:.1f}s"
-                
                 indicator = "🟢" if log['mode'] == 'local' else "🔵"
                 entry = f"{indicator} [{ts}] {mode} | Conf: {conf} | Dur: {dur}"
                 self.audit_list.insert(tk.END, entry)
-                
         except Exception as e:
             self.audit_list.insert(tk.END, f"Error loading logs: {e}")
 
@@ -351,36 +399,32 @@ class MainWindow(tk.Tk):
             self._stop_recording()
 
     def _start_recording(self):
-        """Start recording audio."""
-        self.mic_btn.config(text="🛑 STOP", bg="#d32f2f")
-        self.status_label.config(text="🔴 Recording...", fg="#ff5252")
+        """Start recording audio and update UI."""
+        self.record_circle.itemconfig(self._btn_circle, fill="#d32f2f") # Red
+        self.status_label.config(text="🔴 RECORDING", fg="#ff5252")
         self.result_text.config(state="normal")
         self.result_text.delete("1.0", tk.END)
         self.result_text.insert("1.0", "Listening...")
         self.result_text.config(state="disabled")
         
-        # Start timer
         self._timer_seconds = 0
         self._update_timer()
         
-        # Update HUD
         if self.hud.is_visible:
             self.hud.start_recording_mode()
         
         self.engine.start_recording(self._engine_callback)
 
     def _stop_recording(self):
-        """Stop recording and process."""
-        self.mic_btn.config(text="⏳", bg="#ff9800", state="disabled")
-        self.status_label.config(text="⏳ Processing...", fg="#ff9800")
+        """Stop recording and update UI."""
+        self.record_circle.itemconfig(self._btn_circle, fill="#ff9800") # Amber
+        self.status_label.config(text="⏳ PROCESSING", fg="#ff9800")
         
-        # Stop timer
         if self._timer_job:
             self.after_cancel(self._timer_job)
             self._timer_job = None
         self.timer_label.config(text="")
         
-        # Update HUD
         if self.hud.is_visible:
             self.hud.stop_recording_mode()
         
@@ -431,7 +475,6 @@ class MainWindow(tk.Tk):
                         self.result_text.config(state="normal")
                         self.result_text.delete("1.0", tk.END)
                         
-                        # 1. Confidence-based Insertion
                         conf = data.get("confidence", 1.0)
                         tag = "high_conf"
                         if conf < 0.6: tag = "low_conf"
@@ -440,16 +483,12 @@ class MainWindow(tk.Tk):
                         self.result_text.insert("1.0", text, tag)
                         self.last_raw_text = text
                         
-                        # 2. Update Smart Status
                         is_spec = data.get("is_specialized", False)
                         self.hud.update_smart_status(is_spec)
                         
-                        # 3. Update Labels & Control Center
-                        # 3. Update Metrics (Conditional)
                         conf_percent = int(conf*100)
                         tokens = data.get("tokens", 0)
                         
-                        # Only show confidence if enabled or if we have an API key (meaning we might be using cloud)
                         show_conf = self.config.get("show_confidence", False) or bool(self.config.get("keys", {}).get("Gemini") or self.config.get("keys", {}).get("OpenAI"))
                         
                         status_text = f"Tokens: {tokens}"
@@ -460,7 +499,6 @@ class MainWindow(tk.Tk):
                         self.token_label.config(text=f"Est. Tokens: {tokens}")
                         self._update_ecosystem_view() 
 
-                        # 4. Clipboard & Feedback
                         if self.config.get("auto_clipboard", True):
                             import pyperclip
                             pyperclip.copy(text)
@@ -468,17 +506,19 @@ class MainWindow(tk.Tk):
                         if warning:
                             self.status_label.config(text=f"⚠ {warning}", fg="#ff9800")
                         else:
-                            self.status_label.config(text="✅ Copied to clipboard!", fg="#4caf50")
+                            self.status_label.config(text="✅ COPIED!", fg="#4caf50")
                         
                         if self.hud.is_visible:
                             self.hud.show_final(text, success=True)
+                        
+                        self.record_circle.itemconfig(self._btn_circle, fill="#1392ec") # Reset Blue
                     else:
                         error_text = error if error else "No speech detected"
                         self.status_label.config(text=f"❌ {error_text}", fg="#f44336")
                         if self.hud.is_visible:
                             self.hud.show_final("", success=False)
+                        self.record_circle.itemconfig(self._btn_circle, fill="#1392ec") # Reset Blue
                     
-                    self.mic_btn.config(text="🎙 RECORD", bg="#007acc", state="normal")
                     self.timer_label.config(text="")
 
         except queue.Empty:
@@ -528,17 +568,67 @@ class MainWindow(tk.Tk):
             
             self.hud.update_connection(self.engine.api_status)
 
+
     def _start_drag(self, event):
-        self._drag_data["x"] = event.x
-        self._drag_data["y"] = event.y
+        # Only allow dragging if the click was in the title bar or sidebar (DragZones)
+        if event.widget in [self.title_bar, self.sidebar] or isinstance(event.widget, tk.Label):
+            self._drag_data["x"] = event.x
+            self._drag_data["y"] = event.y
 
     def _do_drag(self, event):
-        x = self.winfo_x() - self._drag_data["x"] + event.x
-        y = self.winfo_y() - self._drag_data["y"] + event.y
-        self.geometry(f"+{x}+{y}")
+        if self._drag_data.get("x") is not None:
+            x = self.winfo_x() - self._drag_data["x"] + event.x
+            y = self.winfo_y() - self._drag_data["y"] + event.y
+            self.geometry(f"+{x}+{y}")
 
     def _minimize_window(self):
         self.withdraw()
         self.overrideredirect(False)
         self.iconify()
         self.after(0, lambda: self.overrideredirect(True))
+
+    def _build_about_view(self):
+        """Build the highly stylized About page."""
+        parent = self.frames["about"]
+        
+        canvas = tk.Canvas(parent, bg="#101a22", highlightthickness=0)
+        scrollbar = tk.Scrollbar(parent, orient="vertical", command=canvas.yview, width=0)
+        scroll_content = tk.Frame(canvas, bg="#101a22")
+        
+        scroll_content.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=scroll_content, anchor="nw", width=700)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        header = tk.Frame(scroll_content, bg="#111518", padx=40, pady=50)
+        header.pack(fill="x", pady=20, padx=40)
+        
+        tk.Label(header, text="🎙️", font=("Segoe UI", 48), bg="#111518").pack()
+        tk.Label(header, text="EasySTT", font=("Segoe UI", 36, "bold"), 
+                 bg="#111518", fg="#ffffff").pack()
+        tk.Label(header, text="The I'm Too Lazy to Type Edition", 
+                 font=("Segoe UI", 12, "bold"), bg="#111518", fg="#1392ec").pack()
+
+        specs_container = tk.Frame(scroll_content, bg="#101a22", padx=40)
+        specs_container.pack(fill="x")
+        
+        tk.Label(specs_container, text="BUILD INFORMATION", font=("Segoe UI", 8, "bold"), 
+                 bg="#101a22", fg="#1392ec").pack(anchor="w", pady=(20, 10))
+        
+        for label, val in [("Architect", "Sijo Joseph"), ("Version", "2.0.0-pro"), ("Core", "Faster Whisper Turbo")]:
+            row = tk.Frame(specs_container, bg="#111518", padx=20, pady=15)
+            row.pack(fill="x", pady=2)
+            tk.Label(row, text=label, font=("Segoe UI", 10), bg="#111518", fg="#666666").pack(side="left")
+            tk.Label(row, text=val, font=("Segoe UI Semibold", 10), bg="#111518", fg="#ffffff").pack(side="right")
+
+        warning_frame = tk.Frame(scroll_content, bg="#1a1401", padx=25, pady=20, 
+                                highlightbackground="#3d2a01", highlightthickness=1)
+        warning_frame.pack(fill="x", padx=40, pady=40)
+        
+        tk.Label(warning_frame, text="⚠️ WARNING: Excessive use of this software might lead to complete loss of typing skills and a sudden urge to talk to inanimate objects.", 
+                 font=("Segoe UI", 9, "bold"), bg="#1a1401", fg="#ff9800", wraplength=600, justify="center").pack()
+        
+        tk.Label(scroll_content, text="© 2026 Monkey Lab. All rights reserved.", 
+                 font=("Segoe UI", 8), bg="#101a22", fg="#444444").pack(pady=20)

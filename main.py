@@ -11,14 +11,12 @@ from core.engine import STTEngine
 from core.personalization import PersonalizationManager
 from core.validator import SetupValidator
 from core.dependency_manager import DependencyManager
-# from ui.main_window import MainWindow  <-- REPLACED
-from ui.web_window import WebWindow
+from ui.qt_main_window import QtMainWindow
+from core.controller import AppController
+from PySide6.QtWidgets import QApplication
 
 # Initialize Colorama for Terminal Logging
 colorama.init(autoreset=True)
-
-
-
 
 def main():
     print(f"{Fore.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -44,18 +42,19 @@ def main():
     import threading
     threading.Thread(target=engine.preload_model, daemon=True).start()
     
-    # 4. Launch Main Window (Web UI)
-    app = WebWindow(config, engine)
+    # 4. Launch Main Window & Controller
+    qt_app = QApplication(sys.argv)
+    window = QtMainWindow(config, engine)
+    controller = AppController(window, engine, config)
     
     # 6. Register Global Hotkey
     shortcut = config.get("shortcut", "ctrl+alt+r")
     try:
-        # Use bridge to toggle recording. No need for app.after() here as bridge handles threading.
-        keyboard.add_hotkey(shortcut, lambda: app.bridge.toggle_recording())
+        # Connect hotkey to controller start/stop toggle
+        keyboard.add_hotkey(shortcut, lambda: controller.start_recording() if not controller.is_recording else controller.stop_recording())
         print(f"{Fore.GREEN}✓ Global hotkey registered: {shortcut.upper()}")
     except Exception as e:
         print(f"{Fore.RED}✗ Could not bind hotkey '{shortcut}': {e}")
-        print(f"{Fore.YELLOW}  Tip: Try running as Administrator or change hotkey in Settings")
     
     # 7. Run Application
     print(f"{Fore.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -63,7 +62,7 @@ def main():
     print(f"{Fore.CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{Fore.RESET}")
     
     try:
-        app.run()
+        sys.exit(qt_app.exec())
     except KeyboardInterrupt:
         print(f"\n{Fore.YELLOW}Shutting down...")
     finally:
