@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎙️ EasySTT v2.0 - The Sound of Productivity
+# 🎙️ EasySTT v2.0 
 ### *The "I'm Too Lazy to Type" Edition*
 
 <img src="https://github.com/JosephSijo/EasySTT-v2/blob/8607d24a8b932b0c2d89847b608b9422a1d897f6/LML%20Full%20(Light).png" width="280" alt="Lazy Monkey Lab Logo"/>
