@@ -94,7 +94,7 @@ class STTEngine:
         self.interim_buffer = []
         self.live_text = ""  # Accumulated live transcription
         self.chunk_duration_sec = 0.05
-        self.preview_interval_sec = max(0.2, self.config.get("preview_interval_ms", 300) / 1000)
+        self.preview_interval_sec = max(0.5, self.config.get("preview_interval_ms", 300) / 1000)
         self.preview_window_sec = max(2.0, self.config.get("preview_window_ms", 3500) / 1000)
         self.max_silence_sec = max(0.4, self.config.get("silence_duration_ms", 850) / 1000)
         self.min_speech_sec = max(0.15, self.config.get("min_speech_ms", 250) / 1000)
@@ -201,7 +201,7 @@ class STTEngine:
         
         # Sync model size with config before loading
         self.model_size = self.config.get("whisper_model", "turbo")
-        self.preview_interval_sec = max(0.2, self.config.get("preview_interval_ms", 300) / 1000)
+        self.preview_interval_sec = max(0.5, self.config.get("preview_interval_ms", 300) / 1000)
         self.preview_window_sec = max(2.0, self.config.get("preview_window_ms", 3500) / 1000)
         self.max_silence_sec = max(0.4, self.config.get("silence_duration_ms", 850) / 1000)
         self.min_speech_sec = max(0.15, self.config.get("min_speech_ms", 250) / 1000)
@@ -264,42 +264,23 @@ class STTEngine:
                 time.sleep(0.1)
 
     def _process_loop(self):
-        """Low-latency utterance loop with silence endpointing and rolling previews."""
+        """Stable full-buffer preview loop restored from the last reliable engine path."""
         accumulated_audio = []
         last_interim_emit = time.time()
-        speech_started = False
-        speech_duration = 0.0
-        silence_duration = 0.0
-        noise_floor = self.vad_rms_threshold * 0.5
         
         while self.is_recording or not self.audio_queue.empty():
             try:
                 chunk = self.audio_queue.get(timeout=0.2)
             except queue.Empty:
-                if speech_started and silence_duration >= self.max_silence_sec:
-                    break
-                if not self.is_recording:
+                if not self.is_recording: 
                     break
                 continue
 
             flattened = chunk.flatten().astype(np.float32)
-            duration = len(flattened) / self.fs
-            stream_chunk, rnnoise_speech_prob = self._prepare_stream_chunk(flattened)
-            is_speech, speech_level = self._detect_speech_activity(stream_chunk, noise_floor, rnnoise_speech_prob)
-            if not speech_started:
-                noise_floor = (noise_floor * 0.92) + (speech_level * 0.08)
+            accumulated_audio.append(flattened)
 
-            if is_speech:
-                speech_started = True
-                speech_duration += duration
-                silence_duration = 0.0
-                accumulated_audio.append(stream_chunk)
-            elif speech_started:
-                silence_duration += duration
-                accumulated_audio.append(stream_chunk)
-
-            if speech_started and time.time() - last_interim_emit >= self.preview_interval_sec:
-                preview_audio = self._build_preview_audio(accumulated_audio)
+            if accumulated_audio and time.time() - last_interim_emit >= self.preview_interval_sec:
+                preview_audio = np.concatenate(accumulated_audio).flatten()
                 interim_result = self._transcribe_raw(
                     preview_audio,
                     remove_fillers=False,
@@ -312,13 +293,8 @@ class STTEngine:
                     self._emit(interim_result)
                 last_interim_emit = time.time()
 
-            if speech_started and silence_duration >= self.max_silence_sec and speech_duration >= self.min_speech_sec:
-                if self.auto_stop_on_silence:
-                    self.is_recording = False
-                break
-
         # Final processing
-        if accumulated_audio and speech_duration >= self.min_speech_sec:
+        if accumulated_audio:
             final_audio = np.concatenate(accumulated_audio).flatten()
             self._finalize_transcription(final_audio)
         else:
@@ -334,7 +310,7 @@ class STTEngine:
     ) -> Dict[str, Any] | str:
         """Core faster-whisper transcription with Multi-Layered Biasing."""
         if not self.model: return ""
-        prepared_audio = self._apply_voice_focus(audio_data)
+        prepared_audio = self._prepare_transcription_audio(audio_data)
         
         # 1. Get Base Vocabulary Bias from SQLite (Personal + Domain)
         initial_prompt = self.vocab.get_prompt_bias()
@@ -359,7 +335,8 @@ class STTEngine:
         if preview_mode:
             transcribe_kwargs.update(
                 {
-                    "vad_filter": False,
+                    "vad_filter": True,
+                    "vad_parameters": dict(min_silence_duration_ms=500),
                     "word_timestamps": False,
                     "condition_on_previous_text": False,
                 }
@@ -474,6 +451,16 @@ class STTEngine:
                 daemon=True,
             ).start()
 
+    def _prepare_transcription_audio(self, audio_data: np.ndarray) -> np.ndarray:
+        audio = np.asarray(audio_data, dtype=np.float32).flatten()
+        if audio.size == 0:
+            return audio
+
+        peak = float(np.max(np.abs(audio))) if audio.size else 0.0
+        if peak > 1.0:
+            audio = audio / peak
+        return np.clip(audio, -1.0, 1.0).astype(np.float32)
+
     def _apply_voice_focus(self, audio_data: np.ndarray) -> np.ndarray:
         audio = np.asarray(audio_data, dtype=np.float32).flatten()
         if audio.size == 0:
@@ -499,10 +486,10 @@ class STTEngine:
         return audio.astype(np.float32)
 
     def _measure_speech_level(self, audio_chunk: np.ndarray) -> float:
-        focused = self._apply_voice_focus(audio_chunk)
-        if focused.size == 0:
+        audio = np.asarray(audio_chunk, dtype=np.float32).flatten()
+        if audio.size == 0:
             return 0.0
-        return float(np.sqrt(np.mean(np.square(focused))))
+        return float(np.sqrt(np.mean(np.square(audio))))
 
     def _build_preview_audio(self, chunks: list[np.ndarray]) -> np.ndarray:
         if not chunks:
@@ -627,15 +614,18 @@ class STTEngine:
         audio_chunk: np.ndarray,
         noise_floor: float,
         rnnoise_speech_prob: Optional[float] = None,
+        analysis_chunk: Optional[np.ndarray] = None,
     ) -> tuple[bool, float]:
         speech_level = self._measure_speech_level(audio_chunk)
         silero_state = self._detect_speech_with_silero(audio_chunk)
-        if silero_state is not None:
-            return silero_state, speech_level
 
         speech_threshold = max(self.vad_rms_threshold, noise_floor * self.vad_noise_ratio)
         rnnoise_state = rnnoise_speech_prob is not None and rnnoise_speech_prob >= self.rnnoise_speech_threshold
-        return speech_level >= speech_threshold or rnnoise_state, speech_level
+        fallback_state = speech_level >= speech_threshold or rnnoise_state
+
+        if silero_state is not None:
+            return bool(silero_state or fallback_state), speech_level
+        return fallback_state, speech_level
 
     def _detect_speech_with_silero(self, audio_chunk: np.ndarray) -> Optional[bool]:
         if self.silero_iterator is None or torch is None:
@@ -662,31 +652,21 @@ class STTEngine:
             return None
 
     def _prepare_stream_chunk(self, audio_chunk: np.ndarray) -> tuple[np.ndarray, Optional[float]]:
-        processed = np.asarray(audio_chunk, dtype=np.float32).flatten()
+        raw_audio = np.asarray(audio_chunk, dtype=np.float32).flatten()
         rnnoise_prob: Optional[float] = None
 
         if self.noise_suppression_enabled and self.rnnoise_stream is not None:
             try:
-                frames = list(self.rnnoise_stream.denoise_chunk(processed, partial=False))
+                frames = list(self.rnnoise_stream.denoise_chunk(raw_audio, partial=False))
                 if frames:
                     probs = [float(np.mean(frame_prob)) for frame_prob, _denoised in frames]
                     rnnoise_prob = float(np.mean(probs)) if probs else None
-                    denoised_frames = []
-                    for _prob, denoised in frames:
-                        denoised_np = np.asarray(denoised).astype(np.float32).flatten()
-                        if denoised_np.size:
-                            denoised_frames.append(denoised_np / 32768.0)
-                    if denoised_frames:
-                        processed = np.concatenate(denoised_frames).astype(np.float32)
             except Exception as exc:
                 self.rnnoise_last_error = str(exc)
                 self.rnnoise_stream = None
                 print(f"{Fore.YELLOW}[Engine] RNNoise stream failed, reverting to raw audio: {exc}")
 
-        if processed.size == 0:
-            processed = np.asarray(audio_chunk, dtype=np.float32).flatten()
-
-        return processed, rnnoise_prob
+        return raw_audio, rnnoise_prob
 
     def _emit(self, data: Dict[str, Any]):
         if self.callback_fn:
