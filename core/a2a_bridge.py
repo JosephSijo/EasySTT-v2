@@ -27,7 +27,7 @@ class A2ABridge:
         self.engine = engine
         self.config = config
         self.port = config.get("a2a_port", 8090)
-        self.enabled = config.get("a2a_enabled", True) # Default to enabled for Pro
+        self.enabled = config.get("a2a_enabled", False)
         
         self.app = FastAPI(title="EasySTT A2A API")
         self._setup_routes()
@@ -49,7 +49,7 @@ class A2ABridge:
         @self.app.post("/recording/start")
         async def start_recording(background_tasks: BackgroundTasks):
             if not self.engine.is_recording:
-                background_tasks.add_task(self.engine.start_recording)
+                background_tasks.add_task(self.engine.start_recording, lambda _data: None)
                 return {"message": "Recording started"}
             return {"message": "Already recording"}
 

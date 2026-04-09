@@ -9,6 +9,54 @@ QMainWindow, QWidget#MainContent {
     font-family: 'Segoe UI Variable Display', 'Inter', sans-serif;
 }
 
+QFrame#StartupOverlay {
+    background-color: rgba(4, 10, 14, 235);
+}
+
+QFrame#StartupCard {
+    background-color: #0a141a;
+    border: 1px solid #1a2b36;
+    border-radius: 18px;
+}
+
+QLabel#StartupEyebrow {
+    color: #1392ec;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+QLabel#StartupTitle {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+QLabel#StartupStatus {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+QLabel#StartupDetail, QLabel#StartupState {
+    color: #8aa0af;
+    font-size: 12px;
+}
+
+QProgressBar#StartupProgress {
+    border: 1px solid #1a2b36;
+    border-radius: 10px;
+    background-color: #050b0f;
+    color: #d5dce1;
+    text-align: center;
+    min-height: 24px;
+}
+
+QProgressBar#StartupProgress::chunk {
+    background-color: #1392ec;
+    border-radius: 8px;
+}
+
 /* Sidebar */
 QFrame#EzSidebar {
     background-color: #050b0f;
@@ -17,17 +65,17 @@ QFrame#EzSidebar {
 
 QLineEdit#SidebarSearch {
     background-color: #0a141a;
-    border: none;
+    border: 1px solid #13202a;
     border-radius: 6px;
     padding: 10px 15px;
-    color: #888888;
+    color: #6d8595;
     font-size: 11px;
     margin: 10px 15px;
 }
 
 QLabel#SidebarHeading {
-    color: #444444;
-    font-size: 9px;
+    color: #7f95a3;
+    font-size: 10px;
     font-weight: bold;
     margin-left: 20px;
     margin-top: 20px;
@@ -36,7 +84,7 @@ QLabel#SidebarHeading {
 
 QPushButton#SidebarItem {
     background-color: transparent;
-    color: #555555;
+    color: #9db1c0;
     text-align: left;
     padding: 8px 25px;
     font-size: 12px;
@@ -61,9 +109,15 @@ QLabel#DashboardTitle {
     color: #ffffff;
 }
 
+QFrame#EzCard {
+    background-color: #0a141a;
+    border: 1px solid #1a2b36;
+    border-radius: 14px;
+}
+
 QLabel#DashboardSub {
     font-size: 14px;
-    color: #666666;
+    color: #90a3af;
     line-height: 20px;
 }
 
@@ -103,16 +157,19 @@ QFrame#TranscriptCard {
     border-radius: 15px;
 }
 
-QLabel#MainTranscript {
-    font-size: 28px;
+QTextEdit#MainTranscript {
+    background-color: transparent;
+    border: none;
+    color: #f2f7fb;
+    font-size: 23px;
     font-weight: 500;
     line-height: 1.4;
-    color: #ffffff;
+    selection-background-color: #17415f;
 }
 
 QLabel#InterimTranscript {
-    font-size: 28px;
-    color: #555555;
+    font-size: 17px;
+    color: #7f95a3;
     font-style: italic;
 }
 
@@ -133,6 +190,41 @@ QPushButton#StopButton {
     font-weight: 600;
 }
 
+QPushButton#SecondaryButton {
+    background-color: #0d171d;
+    color: #d5dce1;
+    border: 1px solid #1a2b36;
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-height: 20px;
+}
+
+QPushButton#SecondaryButton:hover {
+    border-color: #1392ec;
+    color: #ffffff;
+}
+
+QLineEdit, QComboBox, QTextEdit {
+    background-color: #081015;
+    border: 1px solid #1a2b36;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #ffffff;
+}
+
+QLineEdit:focus, QComboBox:focus, QTextEdit:focus {
+    border: 1px solid #1392ec;
+}
+
+QCheckBox {
+    color: #d5dce1;
+    spacing: 8px;
+}
+
+QScrollArea, QWidget#SettingsScrollHost {
+    background: transparent;
+}
+
 /* User Profile (Sidebar Bottom) */
 QFrame#UserProfile {
     background-color: #0a141a;
@@ -143,11 +235,22 @@ QFrame#UserProfile {
 /* Common Components (from Phase 17) */
 QPushButton#NavButton {
     background-color: transparent;
-    color: #888888;
+    color: #9db1c0;
     border: none;
     text-align: left;
     padding: 12px 25px;
     font-size: 13px;
     font-weight: 500;
+}
+
+QPushButton#NavButton:hover {
+    color: #ffffff;
+    background-color: #091219;
+}
+
+QPushButton#NavButton[active="true"] {
+    background-color: #0d171d;
+    color: #ffffff;
+    border-left: 3px solid #1392ec;
 }
 """

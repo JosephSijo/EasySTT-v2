@@ -118,6 +118,7 @@ class SidebarProfile(QFrame):
         settings_btn = QPushButton("⚙️")
         settings_btn.setFixedSize(24, 24)
         settings_btn.setStyleSheet("background: transparent; border: none; font-size: 14px;")
+        settings_btn.hide()
         
         layout.addWidget(avatar)
         layout.addLayout(details)
@@ -126,11 +127,13 @@ class SidebarProfile(QFrame):
 
 class EzSidebar(QFrame):
     tabChanged = Signal(str)
+    transcriptSelected = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("EzSidebar")
         self.setFixedWidth(260)
+        self.history_entries = []
         self._init_ui()
 
     def _init_ui(self):
@@ -155,47 +158,43 @@ class EzSidebar(QFrame):
         
         self.nav_btns = {}
         self._add_nav_btn("🏠  HOME", "home", active=True)
-        self._add_nav_btn("🧩  ECOSYSTEM", "ecosystem")
-        self._add_nav_btn("🛡️  PRIVACY", "privacy")
+        self._add_nav_btn("🧪  TEST LAB", "diagnostics")
         self._add_nav_btn("⚙️  SETTINGS", "settings")
         layout.addWidget(self.nav_group)
 
         # 3. Search
         self.search = QLineEdit()
         self.search.setObjectName("SidebarSearch")
-        self.search.setPlaceholderText("Search transcriptions...")
+        self.search.setPlaceholderText("Search saved transcripts")
+        self.search.setEnabled(False)
+        self.search.textChanged.connect(self._filter_history)
         layout.addWidget(self.search)
 
         # 4. History
         h1 = QLabel("  RECENT TRANSCRIPTIONS")
         h1.setObjectName("SidebarHeading")
+        self.history_note = QLabel("  No saved transcripts yet. Record a session to build your history.")
+        self.history_note.setWordWrap(True)
+        self.history_note.setStyleSheet("color: #7f95a3; font-size: 11px; padding: 0 20px 0 20px;")
         layout.addWidget(h1)
-        
-        self.recent_layout = QVBoxLayout()
-        self.recent_layout.setContentsMargins(0, 5, 0, 5)
-        self._add_history_btn(self.recent_layout, "Product Roadmap Sync", "2 mins ago • 14:32")
-        self._add_history_btn(self.recent_layout, "Interview with Sarah J.", "Yesterday • 45:10")
-        layout.addLayout(self.recent_layout)
+        layout.addWidget(self.history_note)
 
-        # 5. Folders
-        h2 = QLabel("  FOLDERS")
-        h2.setObjectName("SidebarHeading")
-        layout.addWidget(h2)
-        self.folder_layout = QVBoxLayout()
-        self._add_history_btn(self.folder_layout, "📁 Personal Notes")
-        self._add_history_btn(self.folder_layout, "📁 Client Meetings")
-        layout.addLayout(self.folder_layout)
+        self.recent_container = QWidget()
+        self.recent_layout = QVBoxLayout(self.recent_container)
+        self.recent_layout.setContentsMargins(0, 5, 0, 5)
+        self.recent_layout.setSpacing(2)
+        layout.addWidget(self.recent_container)
         
         layout.addStretch()
 
         # 6. Profile
-        self.profile = SidebarProfile("Alex Chen", "PREMIUM PLAN")
+        self.profile = SidebarProfile("Local Workspace", "DESKTOP APP")
         layout.addWidget(self.profile)
 
         self.workspace_btn = QPushButton("← Back to Workspace")
         self.workspace_btn.setObjectName("NavButton")
         self.workspace_btn.setFixedHeight(40)
-        layout.addWidget(self.workspace_btn)
+        self.workspace_btn.hide()
 
     def _add_nav_btn(self, text, key, active=False):
         btn = QPushButton(text)
@@ -213,10 +212,41 @@ class EzSidebar(QFrame):
             b.style().polish(b)
         self.tabChanged.emit(key)
 
-    def _add_history_btn(self, target_layout, text, sub=None):
+    def refresh_history(self, entries):
+        self.history_entries = list(entries)
+        self._rebuild_history(self.history_entries)
+
+    def _filter_history(self, query):
+        query = (query or "").strip().lower()
+        if not query:
+            filtered = self.history_entries
+        else:
+            filtered = [
+                entry for entry in self.history_entries
+                if query in entry.get("title", "").lower() or query in entry.get("preview", "").lower()
+            ]
+        self._rebuild_history(filtered)
+
+    def _rebuild_history(self, entries):
+        while self.recent_layout.count():
+            item = self.recent_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        has_entries = bool(entries)
+        self.history_note.setVisible(not has_entries)
+        self.search.setEnabled(bool(self.history_entries))
+
+        for entry in entries:
+            self._add_history_btn(self.recent_layout, entry["title"], entry["subtitle"], entry["path"])
+
+    def _add_history_btn(self, target_layout, text, sub=None, path=None):
         btn = QPushButton()
         btn.setObjectName("SidebarItem")
         btn.setCursor(Qt.PointingHandCursor)
+        if path:
+            btn.clicked.connect(lambda _checked=False, target_path=path: self.transcriptSelected.emit(target_path))
         l = QVBoxLayout(btn)
         l.setContentsMargins(25, 8, 25, 8)
         l.setSpacing(2)

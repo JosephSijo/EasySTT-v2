@@ -1,5 +1,10 @@
 import os
-import webview
+
+try:
+    import webview
+except ImportError:  # pragma: no cover - optional dependency
+    webview = None
+
 from ui.web_bridge import WebBridge
 
 class WebWindow:
@@ -7,6 +12,11 @@ class WebWindow:
     Main application controller managing pywebview windows.
     """
     def __init__(self, config, engine):
+        if webview is None:
+            raise RuntimeError(
+                "pywebview is optional. Install dependencies from requirements-webview.txt to use the web UI."
+            )
+
         self.config = config
         self.engine = engine
         self.bridge = WebBridge(engine, config)

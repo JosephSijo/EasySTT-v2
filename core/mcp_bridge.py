@@ -29,10 +29,8 @@ class MCPBridge:
 
     def publish_event(self, event_type: str, data: Dict[str, Any]):
         """Publishes transcription events to A2A subscribers."""
-        # Simulations: Send results to downstream agents
-        print(f"{Fore.MAGENTA}[A2A] Published: {event_type} - {data.get('text', '')[:30]}...")
-        # Integrations: This would eventually hit a WebSocket or A2A Hub
-        pass
+        preview = data.get("text", "")[:30]
+        self.logger.info("[A2A] Published %s: %s", event_type, preview)
 
     def get_vocabulary_hints(self) -> List[str]:
         """Collects combined hints from all active context providers."""

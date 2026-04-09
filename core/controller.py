@@ -1,6 +1,7 @@
 import sys
 import os
 from PySide6.QtCore import QObject, Signal, Slot, QThread, QTimer
+from PySide6.QtWidgets import QApplication
 from typing import Dict, Any
 
 class EngineWorker(QObject):
@@ -26,7 +27,8 @@ class EngineWorker(QObject):
             self.transcriptionReceived.emit(data)
         elif msg_type == "final":
             self.transcriptionReceived.emit(data)
-            self.stateChanged.emit("idle")
+        elif msg_type == "refined":
+            self.transcriptionReceived.emit(data)
         elif msg_type == "level":
             self.levelUpdated.emit(data.get("value", 0.0))
         elif msg_type == "state":
@@ -44,6 +46,11 @@ class AppController(QObject):
         self.window = main_window
         self.engine = engine
         self.config = config
+        self.is_ready = False
+        self.pending_finalize = False
+        self._return_home_timer = QTimer(self)
+        self._return_home_timer.setSingleShot(True)
+        self._return_home_timer.timeout.connect(self._return_to_dashboard)
         
         # 1. Setup Worker
         self.worker = EngineWorker(self.engine)
@@ -53,6 +60,19 @@ class AppController(QObject):
         
         # 3. Initial State
         self.is_recording = False
+
+    def set_ready(self, ready: bool):
+        self.is_ready = ready
+
+    @Slot(str)
+    def handle_startup_complete(self, message: str):
+        self.set_ready(True)
+        self.window.finish_startup(message)
+
+    @Slot(str)
+    def handle_startup_failed(self, message: str):
+        self.set_ready(False)
+        self.window.fail_startup(message)
 
     def _setup_connections(self):
         # UI -> Controller
@@ -67,35 +87,63 @@ class AppController(QObject):
 
     @Slot()
     def start_recording(self):
-        if self.is_recording: return
+        if not self.is_ready or self.is_recording or self.engine.is_processing or self.pending_finalize:
+            return
         self.is_recording = True
+        self._return_home_timer.stop()
         
         # Switch View to Recording
         self.window.content_stack.setCurrentWidget(self.window.recording)
         self.window.recording.waveform.setActive(True)
-        self.window.recording.main_text.setText("Listening...")
+        self.window.recording.det_label.setText("VOICE-FOCUSED CAPTURE")
+        self.window.recording.main_text.setPlainText("Listening for a complete phrase...")
         self.window.recording.interim_text.setText("")
+        self.window.recording.status_line.setText("Listening for speech...")
         
         # Start Engine
         self.engine.start_recording(self.worker.signal_callback)
 
     @Slot()
     def stop_recording(self):
-        if not self.is_recording: return
+        if not self.is_recording:
+            return
         self.is_recording = False
+        self.pending_finalize = True
         
         # Stop Engine (Engine will call callback with 'final' result)
         self.engine.stop_recording()
         self.window.recording.waveform.setActive(False)
+        self.window.recording.status_line.setText("Processing final transcript...")
 
     @Slot(dict)
     def _handle_transcription(self, data):
         text = data.get("text", "")
         if data.get("type") == "interim":
-            self.window.recording.interim_text.setText(f"...{text}")
+            if text:
+                self.window.recording.main_text.setPlainText(text)
+                self.window.recording.interim_text.setText("Live preview")
+                self.window.recording.status_line.setText("Capturing live preview...")
         elif data.get("type") == "final":
-            self.window.recording.main_text.setText(text)
+            self.is_recording = False
+            self.pending_finalize = False
+            self.window.recording.waveform.setActive(False)
+            self.window.recording.main_text.setPlainText(text or "No speech detected. Try again with a clearer phrase.")
             self.window.recording.interim_text.setText("")
+            self._copy_to_clipboard_if_enabled(text)
+            self.window.refresh_transcript_history()
+            if data.get("pending_refinement"):
+                self.window.recording.status_line.setText("Local transcript ready. Optional AI cleanup is running in the background.")
+                self._return_home_timer.start(4000)
+            else:
+                self.window.recording.status_line.setText("Final transcript ready.")
+                self._return_home_timer.start(1200)
+        elif data.get("type") == "refined":
+            self.window.recording.main_text.setPlainText(text or self.window.recording.main_text.toPlainText())
+            self.window.recording.interim_text.setText("")
+            self.window.recording.status_line.setText("Background AI cleanup applied.")
+            self._copy_to_clipboard_if_enabled(text)
+            self.window.refresh_transcript_history()
+            self._return_home_timer.start(1200)
 
     @Slot(float)
     def _handle_audio_level(self, value):
@@ -107,16 +155,28 @@ class AppController(QObject):
     @Slot(str)
     def _handle_state_change(self, state):
         if state == "processing":
-            self.window.recording.main_text.setText("Refining transcript with AI...")
-        elif state == "idle":
-            # Potentially stay on recording view for review or auto-switch back to home
-            pass
+            self.window.recording.status_line.setText("Transcribing locally...")
+        elif state == "refining":
+            self.window.recording.status_line.setText("Optional AI cleanup running in the background...")
+        elif state == "idle" and self.is_recording:
+            self.window.recording.status_line.setText("Ready for the next phrase.")
+
+    def _copy_to_clipboard_if_enabled(self, text: str):
+        if not text or not self.config.get("auto_clipboard", True):
+            return
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setText(text)
 
     @Slot(bool)
     def _handle_connection(self, is_online):
         # Update status badge in settings if visible
         # For now, print or update a global status
         pass
+
+    def _return_to_dashboard(self):
+        if self.window.app_ready:
+            self.window.content_stack.setCurrentWidget(self.window.dashboard)
 
     def get_resource_path(self, relative_path):
         """Get absolute path to resource, works for dev and for PyInstaller"""

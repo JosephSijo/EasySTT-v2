@@ -1,8 +1,20 @@
 from abc import ABC, abstractmethod
+import importlib
 from typing import Optional, Tuple, Dict, Any
-from google import genai
 from openai import OpenAI
-import os
+
+
+def _load_gemini_client() -> tuple[str, Any]:
+    try:
+        return "google-genai", importlib.import_module("google.genai")
+    except ImportError:
+        try:
+            return "google-generativeai", importlib.import_module("google.generativeai")
+        except ImportError as exc:
+            raise RuntimeError(
+                "Gemini support requires either 'google-genai' or the legacy "
+                "'google-generativeai' package to be installed."
+            ) from exc
 
 class AIProvider(ABC):
     @abstractmethod
@@ -10,9 +22,9 @@ class AIProvider(ABC):
         pass
 
 class GeminiProvider(AIProvider):
-    def __init__(self, api_key: str):
-        self.client = genai.Client(api_key=api_key)
-        self.model_id = 'gemini-2.0-flash'
+    def __init__(self, api_key: str, model_id: str = "gemini-2.0-flash"):
+        self.api_key = api_key
+        self.model_id = model_id
 
     def refine(self, text: str, style: str, custom_prompt: str = "") -> str:
         prompts = {
@@ -24,16 +36,29 @@ class GeminiProvider(AIProvider):
         
         system_instruction = prompts.get(style, prompts["Professional"])
         full_prompt = f"{system_instruction}\n\n{text}"
-        
-        response = self.client.models.generate_content(
-            model=self.model_id,
-            contents=full_prompt
-        )
-        return response.text.strip()
 
-class OpenAIProvider(AIProvider):
-    def __init__(self, api_key: str):
-        self.client = OpenAI(api_key=api_key)
+        client_style, modern_genai = _load_gemini_client()
+        if client_style == "google-genai":
+            client = modern_genai.Client(api_key=self.api_key)
+            response = client.models.generate_content(
+                model=self.model_id,
+                contents=full_prompt
+            )
+            return response.text.strip()
+
+        modern_genai.configure(api_key=self.api_key)
+        model = modern_genai.GenerativeModel(self.model_id)
+        response = model.generate_content(full_prompt)
+        return (response.text or "").strip()
+
+class OpenAICompatibleProvider(AIProvider):
+    def __init__(self, api_key: str, model: str, base_url: Optional[str] = None):
+        client_kwargs: Dict[str, Any] = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+
+        self.client = OpenAI(**client_kwargs)
+        self.model = model
 
     def refine(self, text: str, style: str, custom_prompt: str = "") -> str:
         prompts = {
@@ -46,7 +71,7 @@ class OpenAIProvider(AIProvider):
         system_instruction = prompts.get(style, prompts["Professional"])
         
         response = self.client.chat.completions.create(
-            model="gpt-4o",
+            model=self.model,
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": text}
@@ -61,20 +86,48 @@ class WhisperLocalProvider:
         return "Internal faster-whisper logic will handle this"
 
 class AIHandler:
-    def __init__(self, provider_name: str, keys: Dict[str, str]):
+    def __init__(
+        self,
+        provider_name: str,
+        keys: Dict[str, str],
+        api_models: Optional[Dict[str, str]] = None,
+        custom_api_profiles: Optional[list[Dict[str, Any]]] = None,
+    ):
         self.provider_name = provider_name
         self.keys = keys
+        self.api_models = api_models or {}
+        self.custom_api_profiles = custom_api_profiles or []
         self.current_provider = self._get_provider(provider_name, keys)
 
     def _get_provider(self, name: str, keys: Dict[str, str]) -> Optional[AIProvider]:
+        custom_profile = self._find_custom_profile(name)
+        if custom_profile:
+            api_type = custom_profile.get("api_type", "openai_compatible")
+            api_key = custom_profile.get("api_key", "")
+            model = custom_profile.get("model", "gpt-4o")
+            base_url = custom_profile.get("base_url") or None
+
+            if api_type == "gemini" and api_key:
+                return GeminiProvider(api_key, model_id=model)
+            if api_key:
+                return OpenAICompatibleProvider(api_key, model=model, base_url=base_url)
+
         key = keys.get(name)
-        if "Gemini" in name and key:
-            return GeminiProvider(key)
-        elif "GPT" in name and key:
-            # Handle both "OpenAI" and "GPT" naming
+        if name == "Gemini" and key:
+            return GeminiProvider(key, model_id=self.api_models.get("Gemini", "gemini-2.0-flash"))
+        if name == "OpenAI":
             key = keys.get("OpenAI") or keys.get("GPT")
             if key:
-                return OpenAIProvider(key)
+                return OpenAICompatibleProvider(
+                    key,
+                    model=self.api_models.get("OpenAI", "gpt-4o"),
+                )
+        return None
+
+    def _find_custom_profile(self, name: str) -> Optional[Dict[str, Any]]:
+        for profile in self.custom_api_profiles:
+            if profile.get("id") == name or profile.get("name") == name:
+                return profile
         return None
 
     def refine_text(self, text: str, style: str = "Professional", custom_prompt: str = "") -> Dict[str, Any]:
@@ -111,13 +164,26 @@ class AIHandler:
             }
 
     @staticmethod
-    def validate_api_key(provider: str, key: str) -> Tuple[bool, str]:
+    def validate_api_key(
+        provider: str,
+        key: str,
+        base_url: Optional[str] = None,
+        api_type: str = "openai_compatible",
+    ) -> Tuple[bool, str]:
         try:
-            if "Gemini" in provider:
-                client = genai.Client(api_key=key)
-                client.models.list()
-            elif "GPT" in provider:
-                client = OpenAI(api_key=key)
+            if api_type == "gemini" or "Gemini" in provider:
+                client_style, modern_genai = _load_gemini_client()
+                if client_style == "google-genai":
+                    client = modern_genai.Client(api_key=key)
+                    client.models.list()
+                else:
+                    modern_genai.configure(api_key=key)
+                    list(modern_genai.list_models())
+            else:
+                client_kwargs: Dict[str, Any] = {"api_key": key}
+                if base_url:
+                    client_kwargs["base_url"] = base_url
+                client = OpenAI(**client_kwargs)
                 client.models.list()
             return True, "Success"
         except Exception as e:

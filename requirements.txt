@@ -1,4 +1,6 @@
 faster-whisper
+silero-vad
+pyrnnoise
 sounddevice
 numpy
 scipy
@@ -11,4 +13,3 @@ torch
 PySide6
 fastapi
 uvicorn
-pywebview
